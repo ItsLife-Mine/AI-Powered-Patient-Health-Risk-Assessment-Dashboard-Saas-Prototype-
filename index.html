@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Patient Risk Assessment Dashboard</title>
+    <style>
+        /* Basic Styling (Canva/Figma influence) */
+        body { font-family: 'Arial', sans-serif; background-color: #f4f7f9; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h1 { color: #007bff; border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-bottom: 20px; text-align: center; }
+        .input-group { display: flex; flex-wrap: wrap; gap: 20px; }
+        .input-field { flex: 1 1 calc(33% - 20px); min-width: 250px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        button { background-color: #28a745; color: white; padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; margin-top: 20px; transition: background-color 0.3s; }
+        button:hover { background-color: #1e7e34; }
+        #results { margin-top: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #e9ecef; }
+        #riskLevel { font-size: 2em; font-weight: bold; margin-top: 10px; }
+        .risk-low { color: #28a745; }
+        .risk-moderate { color: #ffc107; }
+        .risk-high { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏥 AI-Powered Health Risk Assessment (SaaS Prototype)</h1>
+        <p>Input patient diagnostic features to predict potential diabetes risk. **(Healthcare IT/AI/ML Focus)**</p>
+        
+        <form id="riskForm">
+            <div class="input-group">
+                <div class="input-field"><label for="Pregnancies">Pregnancies (0-17)</label><input type="number" id="Pregnancies" value="1" required></div>
+                <div class="input-field"><label for="Glucose">Glucose (Plasma, mg/dL)</label><input type="number" id="Glucose" value="148" required></div>
+                <div class="input-field"><label for="BloodPressure">Blood Pressure (Diastolic, mmHg)</label><input type="number" id="BloodPressure" value="72" required></div>
+                <div class="input-field"><label for="SkinThickness">Skin Thickness (mm)</label><input type="number" id="SkinThickness" value="35" required></div>
+                <div class="input-field"><label for="Insulin">Insulin (2-Hr serum, mu U/ml)</label><input type="number" id="Insulin" value="0"></div>
+                <div class="input-field"><label for="BMI">BMI (Body Mass Index)</label><input type="number" id="BMI" step="0.1" value="33.6" required></div>
+                <div class="input-field"><label for="DiabetesPedigreeFunction">Diabetes Pedigree Function</label><input type="number" id="DiabetesPedigreeFunction" step="0.001" value="0.627" required></div>
+                <div class="input-field"><label for="Age">Age (Years)</label><input type="number" id="Age" value="50" required></div>
+            </div>
+            
+            <button type="submit">Assess Risk</button>
+        </form>
+
+        <div id="results">
+            <h2>Assessment Results</h2>
+            <p>Risk Status: <span id="riskLevel">---</span></p>
+            <p>Probability: <span id="probability">---</span></p>
+            <p id="message"></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('riskForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const form = e.target;
+            const data = {};
+            
+            // Collect all input data into the JSON object
+            const featureNames = [
+                'Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness', 
+                'Insulin', 'BMI', 'DiabetesPedigreeFunction', 'Age'
+            ];
+
+            featureNames.forEach(name => {
+                // Convert all inputs to number type for the model
+                data[name] = parseFloat(document.getElementById(name).value);
+            });
+
+            // Call the Flask API Endpoint (API Experience)
+            try {
+                const response = await fetch('http://127.0.0.1:5000/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                const result = await response.json();
+                
+                // Update Dashboard (Dashboards experience)
+                const riskLevelElement = document.getElementById('riskLevel');
+                const probabilityElement = document.getElementById('probability');
+                const messageElement = document.getElementById('message');
+
+                if (result.success) {
+                    riskLevelElement.textContent = result.risk_level;
+                    probabilityElement.textContent = `${result.probability}%`;
+                    messageElement.textContent = result.message;
+
+                    // Apply conditional styling based on risk (SaaS presentation quality)
+                    riskLevelElement.className = ''; // Reset classes
+                    if (result.risk_level === 'High Risk') {
+                        riskLevelElement.classList.add('risk-high');
+                    } else if (result.risk_level === 'Moderate Risk') {
+                        riskLevelElement.classList.add('risk-moderate');
+                    } else {
+                        riskLevelElement.classList.add('risk-low');
+                    }
+
+                } else {
+                    riskLevelElement.textContent = 'Error';
+                    probabilityElement.textContent = 'N/A';
+                    messageElement.textContent = `Error: ${result.error}`;
+                }
+
+            } catch (error) {
+                console.error('Fetch error:', error);
+                document.getElementById('riskLevel').textContent = 'API Connection Failed';
+                document.getElementById('message').textContent = 'Could not connect to the backend server. Make sure app.py is running.';
+            }
+        });
+    </script>
+</body>
+</html>
